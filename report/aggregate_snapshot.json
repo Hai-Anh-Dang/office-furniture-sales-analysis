@@ -1,0 +1,17 @@
+{
+  "evidence_recorded_at_utc": "2026-09-03T06:21:50Z",
+  "observed_start": "2023-09-24",
+  "observed_end": "2024-09-23",
+  "currency": "Unspecified",
+  "value_method": "Quantity multiplied by current product-table unit price",
+  "refresh_performed_for_publication": false,
+  "aggregates": {
+    "Orders": 9999,
+    "CompletedOrders": 6704,
+    "CancelledOrders": 3295,
+    "CompletedValue": 16543233.66,
+    "CancelledValue": 8235962.59,
+    "CompletedBuyers": 4771,
+    "RepeatBuyers": 1512
+  }
+}

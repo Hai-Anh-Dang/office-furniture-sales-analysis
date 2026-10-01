@@ -1,0 +1,21 @@
+// Existing calculated support-table definitions, exported as reference text.
+
+'Date' =
+ADDCOLUMNS(
+    CALENDAR(MIN(orders[order date]), MAX(orders[order date])),
+    "Year", YEAR([Date]),
+    "Quarter", "Q" & FORMAT([Date], "Q"),
+    "Month", FORMAT([Date], "MMM"),
+    "Month Number", MONTH([Date]),
+    "Year Month", FORMAT([Date], "yyyy-MM"),
+    "Year Month Sort", YEAR([Date]) * 100 + MONTH([Date])
+)
+
+'Purchase Frequency' =
+DATATABLE("Band", STRING, "Sort", INTEGER, "Minimum Orders", INTEGER, "Maximum Orders", INTEGER, {{"1 order",1,1,1},{"2 orders",2,2,2},{"3 orders",3,3,3},{"4+ orders",4,4,2147483647}})
+
+'Customer Lifecycle' =
+DATATABLE("Status", STRING, "Sort", INTEGER, {{"One completed order; no cancellation",1},{"Repeat buyer; no cancellation",2},{"Returned after cancellation",3},{"No observed return by period end",4}})
+
+'Customer Value Band' =
+DATATABLE("Band", STRING, "Sort", INTEGER, "Lower Share", DOUBLE, "Upper Share", DOUBLE, {{"Top 10%",1,0,0.1},{"11-20%",2,0.1,0.2},{"21-30%",3,0.2,0.3},{"31-40%",4,0.3,0.4},{"41-50%",5,0.4,0.5},{"51-60%",6,0.5,0.6},{"61-70%",7,0.6,0.7},{"71-80%",8,0.7,0.8},{"81-90%",9,0.8,0.9},{"Bottom 10%",10,0.9,1}})

@@ -1,0 +1,211 @@
+// Existing Power BI measure definitions, exported as reference text.
+
+// Table: *Measure table
+[Total Orders] =
+COALESCE(DISTINCTCOUNT(orders[order id]), 0)
+
+// Table: *Measure table
+[Ordering Customers] =
+COALESCE(DISTINCTCOUNT(orders[customer id]), 0)
+
+// Table: *Measure table
+[Completed Orders] =
+CALCULATE([Total Orders], orders[Order Status] = "completed")
+
+// Table: *Measure table
+[Cancelled Orders] =
+CALCULATE([Total Orders], orders[Order Status] = "cancelled")
+
+// Table: *Measure table
+[Total Submitted Order Value] =
+SUMX(orders, orders[quantity] * RELATED(product[unit price]))
+
+// Table: *Measure table
+[Completed Order Value] =
+CALCULATE([Total Submitted Order Value], orders[Order Status] = "completed")
+
+// Table: *Measure table
+[Cancelled Order Value] =
+CALCULATE([Total Submitted Order Value], orders[Order Status] = "cancelled")
+
+// Table: *Measure table
+[Order Completion Rate] =
+DIVIDE([Completed Orders], [Total Orders])
+
+// Table: *Measure table
+[Average Completed Order Value] =
+DIVIDE([Completed Order Value], [Completed Orders])
+
+// Table: *Measure table
+[Completed Quantity] =
+CALCULATE(SUM(orders[quantity]), orders[Order Status] = "completed")
+
+// Table: *Measure table
+[Completed Buyers] =
+COALESCE(CALCULATE(DISTINCTCOUNT(orders[customer id]), orders[Order Status] = "completed"), 0)
+
+// Table: *Measure table
+[First-Observed Customers] =
+VAR SelectedDates = VALUES('Date'[Date])
+VAR SelectedCustomers = VALUES(orders[customer id])
+RETURN COUNTROWS(
+    FILTER(SelectedCustomers,
+        VAR CustomerKey = orders[customer id]
+        VAR ObservedDate = LOOKUPVALUE(customer[First Observed Order Date], customer[customer id], CustomerKey)
+        RETURN NOT ISBLANK(ObservedDate) && CONTAINS(SelectedDates, 'Date'[Date], ObservedDate)
+    )
+)
+
+// Table: *Measure table
+[Repeat Completed Buyers] =
+VAR Buyers = CALCULATETABLE(VALUES(orders[customer id]), orders[Order Status] = "completed")
+RETURN COUNTROWS(FILTER(Buyers, CALCULATE([Completed Orders]) >= 2))
+
+// Table: *Measure table
+[Observed-Period Repeat Buyer Rate] =
+DIVIDE([Repeat Completed Buyers], [Completed Buyers])
+
+// Table: *Measure table
+[Average Completed Value per Buyer] =
+DIVIDE([Completed Order Value], [Completed Buyers])
+
+// Table: *Measure table
+[Average Completed Orders per Buyer] =
+DIVIDE([Completed Orders], [Completed Buyers])
+
+// Table: *Measure table
+[Cancel-Only Customers] =
+VAR Customers = VALUES(orders[customer id])
+RETURN COUNTROWS(FILTER(Customers, CALCULATE([Completed Orders]) = 0 && CALCULATE([Cancelled Orders]) > 0))
+
+// Table: *Measure table
+[Cancellation Cohort Customers] =
+VAR EndDate = MAX('Date'[Date])
+VAR ActiveCustomers = VALUES(orders[customer id])
+VAR History = ADDCOLUMNS(ActiveCustomers,
+    "__LastCancel", VAR CustomerKey = orders[customer id] RETURN MAXX(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate && orders[Order Status] = "cancelled"), orders[order date]),
+    "__LastOrder", VAR CustomerKey = orders[customer id] RETURN MAXX(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate), orders[order date]),
+    "__Completed", VAR CustomerKey = orders[customer id] RETURN COUNTROWS(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate && orders[Order Status] = "completed"))
+)
+RETURN COUNTROWS(FILTER(History, NOT ISBLANK([__LastCancel])))
+
+// Table: *Measure table
+[Came Back Customers] =
+VAR EndDate = MAX('Date'[Date])
+VAR ActiveCustomers = VALUES(orders[customer id])
+VAR History = ADDCOLUMNS(ActiveCustomers,
+    "__LastCancel", VAR CustomerKey = orders[customer id] RETURN MAXX(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate && orders[Order Status] = "cancelled"), orders[order date]),
+    "__LastOrder", VAR CustomerKey = orders[customer id] RETURN MAXX(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate), orders[order date]),
+    "__Completed", VAR CustomerKey = orders[customer id] RETURN COUNTROWS(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate && orders[Order Status] = "completed"))
+)
+RETURN COUNTROWS(FILTER(History, NOT ISBLANK([__LastCancel]) && [__LastOrder] > [__LastCancel]))
+
+// Table: *Measure table
+[No Observed Return Customers] =
+VAR EndDate = MAX('Date'[Date])
+VAR ActiveCustomers = VALUES(orders[customer id])
+VAR History = ADDCOLUMNS(ActiveCustomers,
+    "__LastCancel", VAR CustomerKey = orders[customer id] RETURN MAXX(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate && orders[Order Status] = "cancelled"), orders[order date]),
+    "__LastOrder", VAR CustomerKey = orders[customer id] RETURN MAXX(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate), orders[order date]),
+    "__Completed", VAR CustomerKey = orders[customer id] RETURN COUNTROWS(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate && orders[Order Status] = "completed"))
+)
+RETURN COUNTROWS(FILTER(History, NOT ISBLANK([__LastCancel]) && [__LastOrder] = [__LastCancel]))
+
+// Table: *Measure table
+[Cancellation Recovery Rate] =
+DIVIDE([Came Back Customers], [Cancellation Cohort Customers])
+
+// Table: *Measure table
+[Customers by Lifecycle] =
+VAR EndDate = MAX('Date'[Date])
+VAR ActiveCustomers = VALUES(orders[customer id])
+VAR History = ADDCOLUMNS(ActiveCustomers,
+    "__LastCancel", VAR CustomerKey = orders[customer id] RETURN MAXX(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate && orders[Order Status] = "cancelled"), orders[order date]),
+    "__LastOrder", VAR CustomerKey = orders[customer id] RETURN MAXX(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate), orders[order date]),
+    "__Completed", VAR CustomerKey = orders[customer id] RETURN COUNTROWS(FILTER(ALL(orders), orders[customer id] = CustomerKey && orders[order date] <= EndDate && orders[Order Status] = "completed"))
+)
+VAR SelectedStatus = SELECTEDVALUE('Customer Lifecycle'[Sort])
+RETURN SWITCH(SelectedStatus,
+    1, COUNTROWS(FILTER(History, ISBLANK([__LastCancel]) && [__Completed] = 1)),
+    2, COUNTROWS(FILTER(History, ISBLANK([__LastCancel]) && [__Completed] >= 2)),
+    3, COUNTROWS(FILTER(History, NOT ISBLANK([__LastCancel]) && [__LastOrder] > [__LastCancel])),
+    4, COUNTROWS(FILTER(History, NOT ISBLANK([__LastCancel]) && [__LastOrder] = [__LastCancel])),
+    [Ordering Customers]
+)
+
+// Table: *Measure table
+[Completed Buyers by Frequency] =
+VAR Lo = SELECTEDVALUE('Purchase Frequency'[Minimum Orders])
+VAR Hi = SELECTEDVALUE('Purchase Frequency'[Maximum Orders])
+VAR Buyers = CALCULATETABLE(VALUES(orders[customer id]), orders[Order Status] = "completed")
+VAR Counts = ADDCOLUMNS(Buyers, "__Orders", CALCULATE([Completed Orders]))
+RETURN IF(NOT ISINSCOPE('Purchase Frequency'[Band]), [Completed Buyers],
+    COUNTROWS(FILTER(Counts, [__Orders] >= Lo && [__Orders] <= Hi))
+)
+
+// Table: *Measure table
+[Top 10% Buyer Count] =
+VAR Buyers = FILTER(ADDCOLUMNS(CALCULATETABLE(VALUES(orders[customer id]), orders[Order Status] = "completed"), "__Value", CALCULATE([Completed Order Value])), [__Value] > 0)
+VAR BuyerCount = COUNTROWS(Buyers)
+RETURN ROUNDUP(BuyerCount * 0.1, 0)
+
+// Table: *Measure table
+[Top 10% Completed Value] =
+VAR Buyers = FILTER(ADDCOLUMNS(CALCULATETABLE(VALUES(orders[customer id]), orders[Order Status] = "completed"), "__Value", CALCULATE([Completed Order Value])), [__Value] > 0)
+VAR BuyerCount = COUNTROWS(Buyers)
+VAR N = ROUNDUP(BuyerCount * 0.1, 0)
+RETURN SUMX(TOPN(N, Buyers, [__Value], DESC, orders[customer id], ASC), [__Value])
+
+// Table: *Measure table
+[Top 10% Value Share] =
+DIVIDE([Top 10% Completed Value], [Completed Order Value])
+
+// Table: *Measure table
+[Top 20% Buyer Count] =
+VAR Buyers = FILTER(ADDCOLUMNS(CALCULATETABLE(VALUES(orders[customer id]), orders[Order Status] = "completed"), "__Value", CALCULATE([Completed Order Value])), [__Value] > 0)
+VAR BuyerCount = COUNTROWS(Buyers)
+RETURN ROUNDUP(BuyerCount * 0.2, 0)
+
+// Table: *Measure table
+[Top 20% Completed Value] =
+VAR Buyers = FILTER(ADDCOLUMNS(CALCULATETABLE(VALUES(orders[customer id]), orders[Order Status] = "completed"), "__Value", CALCULATE([Completed Order Value])), [__Value] > 0)
+VAR BuyerCount = COUNTROWS(Buyers)
+VAR N = ROUNDUP(BuyerCount * 0.2, 0)
+RETURN SUMX(TOPN(N, Buyers, [__Value], DESC, orders[customer id], ASC), [__Value])
+
+// Table: *Measure table
+[Top 20% Value Share] =
+DIVIDE([Top 20% Completed Value], [Completed Order Value])
+
+// Table: *Measure table
+[Customer Value Band Buyers] =
+VAR Buyers = FILTER(ADDCOLUMNS(CALCULATETABLE(VALUES(orders[customer id]), orders[Order Status] = "completed"), "__Value", CALCULATE([Completed Order Value])), [__Value] > 0)
+VAR BuyerCount = COUNTROWS(Buyers)
+VAR Lo = ROUNDUP(BuyerCount * SELECTEDVALUE('Customer Value Band'[Lower Share], 0), 0)
+VAR Hi = ROUNDUP(BuyerCount * SELECTEDVALUE('Customer Value Band'[Upper Share], 1), 0)
+VAR TopHi = TOPN(Hi, Buyers, [__Value], DESC, orders[customer id], ASC)
+VAR TopLo = TOPN(Lo, Buyers, [__Value], DESC, orders[customer id], ASC)
+VAR BandCustomers = EXCEPT(TopHi, TopLo)
+RETURN COUNTROWS(BandCustomers)
+
+// Table: *Measure table
+[Customer Value Band Value] =
+VAR Buyers = FILTER(ADDCOLUMNS(CALCULATETABLE(VALUES(orders[customer id]), orders[Order Status] = "completed"), "__Value", CALCULATE([Completed Order Value])), [__Value] > 0)
+VAR BuyerCount = COUNTROWS(Buyers)
+VAR Lo = ROUNDUP(BuyerCount * SELECTEDVALUE('Customer Value Band'[Lower Share], 0), 0)
+VAR Hi = ROUNDUP(BuyerCount * SELECTEDVALUE('Customer Value Band'[Upper Share], 1), 0)
+VAR TopHi = TOPN(Hi, Buyers, [__Value], DESC, orders[customer id], ASC)
+VAR TopLo = TOPN(Lo, Buyers, [__Value], DESC, orders[customer id], ASC)
+VAR BandCustomers = EXCEPT(TopHi, TopLo)
+RETURN SUMX(BandCustomers, [__Value])
+
+// Table: *Measure table
+[Customer Value Cumulative Share] =
+VAR Buyers = FILTER(ADDCOLUMNS(CALCULATETABLE(VALUES(orders[customer id]), orders[Order Status] = "completed"), "__Value", CALCULATE([Completed Order Value])), [__Value] > 0)
+VAR BuyerCount = COUNTROWS(Buyers)
+VAR Lo = ROUNDUP(BuyerCount * SELECTEDVALUE('Customer Value Band'[Lower Share], 0), 0)
+VAR Hi = ROUNDUP(BuyerCount * SELECTEDVALUE('Customer Value Band'[Upper Share], 1), 0)
+VAR TopHi = TOPN(Hi, Buyers, [__Value], DESC, orders[customer id], ASC)
+VAR TopLo = TOPN(Lo, Buyers, [__Value], DESC, orders[customer id], ASC)
+VAR BandCustomers = EXCEPT(TopHi, TopLo)
+RETURN DIVIDE(SUMX(TopHi, [__Value]), [Completed Order Value])
