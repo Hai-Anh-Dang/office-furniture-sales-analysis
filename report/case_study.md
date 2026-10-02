@@ -18,8 +18,4 @@ This provides a basis for comparing customer purchasing within the extract. It d
 
 Use product contribution and cancellation volume to select product groups for further review. Compare customer contribution and repeat buying to identify useful follow-up questions. Confirm business-process explanations before choosing an intervention or claiming an expected benefit.
 
-## Limits of the evidence
-
-The published aggregate snapshot is drawn from the existing model evidence recorded on 3 September 2026. This publication task did not refresh the model. Currency, historical selling prices, source redistribution rights, and cancellation reasons remain unconfirmed. No intervention or resulting business impact has been measured.
-
 [Aggregate snapshot](aggregate_snapshot.json) · [Power BI definitions](../powerbi/README.md) · [Project overview](../README.md)
