@@ -4,7 +4,7 @@ This independent case study considers what a sales manager could learn from the 
 
 ## Completed and cancelled activity
 
-Of 9,999 recorded orders, 6,704 completed and 3,295 cancelled. Completed Order Value is 16,543,233.66, while Cancelled Order Value is 8,235,962.59. Both values estimate quantity multiplied by current product-table unit price. Currency is unspecified.
+Of 9,999 recorded orders, 6,704 completed and 3,295 cancelled. Completed Order Value is 16,543,233.66, while Cancelled Order Value is 8,235,962.59. Both values estimate quantity multiplied by current product-table unit price.
 
 Separating completed and cancelled populations makes the commercial interpretation clearer. Cancelled value describes orders that did not complete; it cannot be treated as realized sales or assumed recoverable revenue. Cancellation reasons and the process that produced them would be needed before proposing changes.
 
