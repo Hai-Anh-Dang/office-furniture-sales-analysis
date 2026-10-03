@@ -51,8 +51,8 @@ The [data notes](data/README.md) describe the model inputs. Original dataset pro
 ## Power BI
 
 The [Power BI folder](powerbi/README.md) includes exported measure and support-table definitions and a Powerbi dashboard. The report pages are Sales, Product, and Customer. This is the preview of the dashboard for the Powerbi files:
-<img width="1356" height="766" alt="image" src="https://github.com/user-attachments/assets/db6363ec-cabc-4e56-96d5-10368fedbc01" />
-<img width="1368" height="764" alt="image" src="https://github.com/user-attachments/assets/b11cad64-c6ff-4616-87ed-c23623e28cc1" />
+<img width="1356" height="762" alt="image" src="https://github.com/user-attachments/assets/8c01bd93-2ae0-46de-bc40-662bb5c97514" />
+<img width="1357" height="760" alt="image" src="https://github.com/user-attachments/assets/6e704e89-f4a8-44ce-bb51-e2e5e801af11" />
 <img width="1365" height="766" alt="image" src="https://github.com/user-attachments/assets/7ac56216-cd37-4f64-b7bd-b4ddbf14c2d8" />
 
 
